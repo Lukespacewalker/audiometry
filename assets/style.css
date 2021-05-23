@@ -1,0 +1,14 @@
+body{
+    background: #FEFEFE;
+    padding: 0 clamp(10px,calc(2 * 2vw),60px);
+    font-family: "Convection", "Sarabun", san-serif;
+}
+h1,h2,h3,h4,h5{
+    /*font-family: "Convection", "Sarabun", san-serif;*/
+}
+
+.left-right-audiometry-container{
+    display: grid;
+    grid: auto/ 1fr 1fr;
+    column-gap:2em;
+}
