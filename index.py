@@ -2,6 +2,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+from apps import trend
+from script.data_preparation import initialize_data
 
 from app import app
 # import all pages in the app
@@ -66,7 +68,7 @@ for i in [2]:
 
 # embedding the navigation bar
 app.layout = html.Div([
-    dcc.Store(id=''),
+    #dcc.Store(id='audiometries',storage_type="session",data= initialize_data()),
     dcc.Location(id='url', refresh=False),
     navbar,
     html.Div(id='page-content')
@@ -75,12 +77,13 @@ app.layout = html.Div([
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/global_situation':
-        return global_situation.layout
+    pass
+    if pathname == '/niosh':
+        return niosh.layout
     elif pathname == '/singapore':
-        return singapore.layout
+        return osha.layout
     else:
-        return home.layout
+        return trend.layout
 
 if __name__ == '__main__':
     app.run_server(host='127.0.0.1', debug=True)

@@ -88,7 +88,6 @@ def calculate_osha_sts(df_longformat:pd.DataFrame,age_adjustment=True,baseline_r
             # Calculate OSHA STS of the subsequent year
             df_osha_comparing = df_osha[df_osha["year"]==year_list[year_index]]
             df_osha_matched_comparing_with_baseline = pd.merge(left=df_osha_baseline,right=df_osha_comparing,on=["show_hn"],how="inner",suffixes=("","_comparing"))
-            #print(df_osha_matched_comparing_with_baseline.head())
             df_osha_matched_comparing_with_baseline["osha_sts"] = False
             df_osha_matched_comparing_with_baseline.rename(columns={"average_l":"average_l_comparing","average_r":"average_r_comparing"},inplace=True)
             for side in ["l","r"]:

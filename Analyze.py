@@ -18,10 +18,8 @@ pd.set_option("display.max_columns", None)
 pd.set_option('display.max_rows', 600)
 # Import datas
 
-
 def extract_patient_name(df: pd.DataFrame):
     return pd.concat([df["patient_name"].str.extract(r"(?P<title>นาย|นาง สาว|นางสาว|นาง|.+\.|\S+\s+)(?P<patient_name>.+)", expand=True), df.drop(columns=["patient_name"], inplace=False)], axis=1)
-
 
 def remove_junk_from_sub_corp_name_regex(name: str):
     result = re.search(r"^ฝ่าย(?P<corp>.+)", name)
@@ -29,7 +27,6 @@ def remove_junk_from_sub_corp_name_regex(name: str):
         return result.group("corp")
     else:
         return name
-
 
 def remove_junk_from_age_regex(name: str):
     if name is float:
@@ -40,7 +37,6 @@ def remove_junk_from_age_regex(name: str):
     else:
         print("Unable to convert this value : "+str(name))
         return name
-
 
 def normalized_gender(gender: str):
     if gender == "M" or gender == "ชาย":
@@ -128,7 +124,6 @@ df_niosh_patient_detail = df_niosh_patient_detail.loc[:, cols]
 
 # OSHA
 
-
 def analyze_osha(baseline_revision=True, age_adjustment=True):
     df_osha_result = calculate_osha_sts(
         audiometries, baseline_revision, age_adjustment)
@@ -147,7 +142,6 @@ def analyze_osha(baseline_revision=True, age_adjustment=True):
                          barmode="group", height=600, labels={"count": "จำนวนพนักงาน", "sub_corp_name": "แผนก", "osha_sts": "STS"})
     figure_osha = figure_osha.update_xaxes(showgrid=True)
     return(df_osha_result, figure_osha)
-
 
 # Data Preparation
 freq_list = []
