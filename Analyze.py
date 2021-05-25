@@ -471,13 +471,7 @@ def update_osha_detail(rows, derived_virtual_selected_rows, rows_repeated, deriv
         return ('เลือกคนที่ต้องการดูรายละเอียดจากตารางด้านบน', dash.no_update, dash.no_update, dash.no_update)
 
 
-@ app.callback(
-    Output('filtered-by-department-graph', 'figure'),
-    [Input('filter-by-department', 'value')])
-def update_graph(department_name: str):
-    fig = px.line(df_audiometry_trend_bycorp_graph[df_audiometry_trend_bycorp_graph["sub_corp_name"] == department_name], range_x=[250, 9000], x="freq", y="value", color="year",
-                  title="แนวโน้มผล Audiogram ในแต่ละปี ของแผนก"+department_name, labels={"freq": "ความถี่", "value": "ระดับการได้ยินเฉลี่ย", "sub_corp_name": "แผนก"})
-    return fig
+
 
 
 @ app.callback(

@@ -2,10 +2,10 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from apps import trend
-from script.data_preparation import initialize_data
+from apps import trend,niosh,osha
 
 from app import app
+
 # import all pages in the app
 
 # building the navigation bar
@@ -31,7 +31,7 @@ navbar = dbc.Navbar(
                 dbc.Row(
                     [
                         dbc.Col(html.Img(src="/assets/audiowav.svg", height="30px")),
-                        dbc.Col(dbc.NavbarBrand("Audiometry by Suttisak", className="ml-2")),
+                        dbc.Col(dbc.NavbarBrand("Audiometry DASH", className="ml-2")),
                     ],
                     align="center",
                     no_gutters=True,
@@ -68,7 +68,6 @@ for i in [2]:
 
 # embedding the navigation bar
 app.layout = html.Div([
-    #dcc.Store(id='audiometries',storage_type="session",data= initialize_data()),
     dcc.Location(id='url', refresh=False),
     navbar,
     html.Div(id='page-content')
@@ -80,7 +79,7 @@ def display_page(pathname):
     pass
     if pathname == '/niosh':
         return niosh.layout
-    elif pathname == '/singapore':
+    elif pathname == '/osha':
         return osha.layout
     else:
         return trend.layout

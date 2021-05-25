@@ -34,21 +34,16 @@ def initialize_data():
             print("Incorrect gender : " + gender)
             return gender
 
-
     def apply_function_column(df: pd.DataFrame, col_name: str, func: Callable):
         df[col_name] = df[col_name].map(func)
 
+    filepath = "data/ผลตรวจการได้ยิน-ปี-58-63.xlsx"
 
-    audiometry58 = pd.read_excel("ผลตรวจการได้ยิน-ปี-58-63.xlsx",
-                                 sheet_name="58", usecols="B:T")  # Combined Title + Name
-    audiometry59 = pd.read_excel(
-        "ผลตรวจการได้ยิน-ปี-58-63.xlsx", sheet_name="59", usecols="B:G,DA:DN")
-    audiometry61 = pd.read_excel(
-        "ผลตรวจการได้ยิน-ปี-58-63.xlsx", sheet_name="61", usecols="B:G,I:V")
-    audiometry62 = pd.read_excel("ผลตรวจการได้ยิน-ปี-58-63.xlsx",
-                                 sheet_name="62", usecols="D:H,Q:AD")  # Combined Title + Name
-    audiometry63 = pd.read_excel("ผลตรวจการได้ยิน-ปี-58-63.xlsx",
-                                 sheet_name="63", usecols="B:H,CZ:DM")  # Combined Title + Name
+    audiometry58 = pd.read_excel(filepath,sheet_name="58", usecols="B:T")  # Combined Title + Name
+    audiometry59 = pd.read_excel(filepath, sheet_name="59", usecols="B:G,DA:DN")
+    audiometry61 = pd.read_excel(filepath, sheet_name="61", usecols="B:G,I:V")
+    audiometry62 = pd.read_excel(filepath,sheet_name="62", usecols="D:H,Q:AD")  # Combined Title + Name
+    audiometry63 = pd.read_excel(filepath,sheet_name="63", usecols="B:H,CZ:DM")  # Combined Title + Name
     # Clean
     audiometry58.rename(columns={"hn": "show_hn"}, inplace=True)
     audiometry63.rename(columns={"dept_name": "sub_corp_name"}, inplace=True)

@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 
 # Age Adjustment
-age_adjustment_male = pd.read_excel("age_adjustment.xlsx", sheet_name="Male", usecols="A:F")
+age_adjustment_male = pd.read_excel("script/age_adjustment.xlsx", sheet_name="Male", usecols="A:F")
 age_adjustment_male["gender"] = "Male"
-age_adjustment_female = pd.read_excel("age_adjustment.xlsx", sheet_name="Female", usecols="A:F")
+age_adjustment_female = pd.read_excel("script/age_adjustment.xlsx", sheet_name="Female", usecols="A:F")
 age_adjustment_female["gender"] = "Female"
 age_adjustment = pd.concat([age_adjustment_male,age_adjustment_female],axis=0,ignore_index=True)
 age_adjustment.columns=age_adjustment.columns.astype(str)

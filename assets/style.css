@@ -4,11 +4,16 @@ body{
     font-family: "Convection", "Sarabun", san-serif;
 }
 h1,h2,h3,h4,h5{
-    /*font-family: "Convection", "Sarabun", san-serif;*/
+    font-family: "Convection", "Sarabun", san-serif;
+    font-weight: Lighter
 }
 
 .left-right-audiometry-container{
     display: grid;
     grid: auto/ 1fr 1fr;
     column-gap:2em;
+}
+
+.dash-dropdown{
+    min-width: 300px;
 }
