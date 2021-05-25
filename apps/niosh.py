@@ -48,14 +48,14 @@ cols.insert(0, cols.pop(cols.index('title')))
 df_niosh_patient_detail = df_niosh_patient_detail.loc[:, cols]
 
 layout = html.Div(children=[html.H2(
-    children='NIOSH Significant Threshould Shift'
+    children='NIOSH Significant Threshold Shift'
 ),
     dcc.Graph(
         id='figure-niosh',
         figure=figure_niosh
     ),
     html.H2(
-        children='รายชื่อผู้ที่เข้าได้กับ NIOSH Significant Threshould Shift'
+        children='รายชื่อผู้ที่เข้าได้กับ NIOSH Significant Threshold Shift'
     ),
     dcc.Tabs([
         dcc.Tab(label='ตามปีที่เปรียบเทียบ', children=[
@@ -129,9 +129,8 @@ def update_styles(rows, derived_virtual_selected_rows, rows_repeated, derived_vi
         selected_patient_audiometry = df_niosh_patient_detail[
             df_niosh_patient_detail["show_hn"] == selected_patient.loc[0, "show_hn"]]
         selected_patient_audiometry.sort_values(["year"], inplace=True)
-        htmls = []
-        htmls.append(html.Div(className="left-right-audiometry-container",
-                              children=[html.H4(children="Left"), html.H4(children="Right")]))
+        htmls = [html.Div(className="left-right-audiometry-container",
+                          children=[html.H4(children="Left"), html.H4(children="Right")])]
         c = []
         for side in ["l", "r"]:
             freq_list = []
@@ -147,24 +146,24 @@ def update_styles(rows, derived_virtual_selected_rows, rows_repeated, derived_vi
             ))
         htmls.append(
             html.Div(className="left-right-audiometry-container", children=c))
-        return ('ดูผลการตรวจของ ' + selected_patient["title"] + ' ' + selected_patient["patient_name"], htmls)
+        return 'ดูผลการตรวจของ ' + selected_patient["title"] + ' ' + selected_patient["patient_name"], htmls
 
     ctx = dash.callback_context
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
     if trigger_id == "niosh-sts-patients":
         if derived_virtual_selected_rows is None:
-            return ('เลือกคนที่ต้องการดูรายละเอียดจากตารางด้านบน', [], dash.no_update, dash.no_update)
+            return 'เลือกคนที่ต้องการดูรายละเอียดจากตารางด้านบน', [], dash.no_update, dash.no_update
         elif len(derived_virtual_selected_rows) == 0:
-            return (dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
         else:
-            return (*generate(rows, derived_virtual_selected_rows), derived_virtual_selected_rows, [])
+            return *generate(rows, derived_virtual_selected_rows), derived_virtual_selected_rows, []
     elif trigger_id == "niosh-sts-repeated-patients":
         if derived_virtual_selected_rows_repeated is None:
-            return ('เลือกคนที่ต้องการดูรายละเอียดจากตารางด้านบน', [], dash.no_update, dash.no_update)
+            return 'เลือกคนที่ต้องการดูรายละเอียดจากตารางด้านบน', [], dash.no_update, dash.no_update
         elif len(derived_virtual_selected_rows_repeated) == 0:
-            return (dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
         else:
             return (*generate(rows_repeated, derived_virtual_selected_rows_repeated), [],
                     derived_virtual_selected_rows_repeated)
     else:
-        return ('เลือกคนที่ต้องการดูรายละเอียดจากตารางด้านบน', dash.no_update, dash.no_update, dash.no_update)
+        return 'เลือกคนที่ต้องการดูรายละเอียดจากตารางด้านบน', dash.no_update, dash.no_update, dash.no_update
