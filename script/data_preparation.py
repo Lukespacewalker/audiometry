@@ -64,6 +64,6 @@ def initialize_data():
     audiometries.rename(columns={"sex": "gender"}, inplace=True)
     apply_function_column(audiometries, "gender", normalized_gender)
 
-    audiometries["year"] = audiometries["year"].astype("category")
+    audiometries["year"] = audiometries["year"].astype("int")
     audiometries.reset_index(drop=True, inplace=True)
     return audiometries

@@ -43,10 +43,12 @@ def calculate_niosh_sts_internal(df_niosh: pd.DataFrame, show_diff=False) -> pd.
                 if df_niosh_cal.at[index, "niosh_sts"] == True: continue
                 for freq in [500, 1000, 2000, 3000, 4000, 6000]:
                     if df_niosh_cal.at[index, "niosh_sts"] == True: continue
-                    df_niosh_cal.at[index, "used_diff"] = df_niosh.at[index,"audio_" + str(freq) + "_" + side + "_comparing"] - df_niosh.at[index,
-                        "audio_" + str(freq) + "_" + side + "_baseline"]
+                    df_niosh_cal.at[index, "used_diff"] = df_niosh.at[
+                                                              index, "audio_" + str(freq) + "_" + side + "_comparing"] - \
+                                                          df_niosh.at[index,
+                                                                      "audio_" + str(freq) + "_" + side + "_baseline"]
                     df_niosh_cal.at[index, "niosh_sts"] = (df_niosh_cal.at[index, "used_diff"] >= 15 or np.isclose(
-                        df_niosh_cal.at[index, "used_diff"], 15)) and (df_niosh.at[index,"audio_" + str(
+                        df_niosh_cal.at[index, "used_diff"], 15)) and (df_niosh.at[index, "audio_" + str(
                         freq) + "_" + side + "_comparing"] > 25)
     else:
         # Vectorized Version
@@ -57,7 +59,7 @@ def calculate_niosh_sts_internal(df_niosh: pd.DataFrame, show_diff=False) -> pd.
                 df_temp["diff"] = df_niosh["audio_" + str(freq) + "_" + side + "_comparing"] - df_niosh[
                     "audio_" + str(freq) + "_" + side + "_baseline"]
                 df_niosh_cal["niosh_sts"] = np.where(df_niosh_cal["niosh_sts"] | (
-                            ((df_temp["diff"] >= 15) | np.isclose(df_temp["diff"], 15)) & (df_temp["comparing"] > 25)),
+                        ((df_temp["diff"] >= 15) | np.isclose(df_temp["diff"], 15)) & (df_temp["comparing"] > 25)),
                                                      True, False)
     return df_niosh_cal
 
@@ -74,10 +76,33 @@ def calculate_niosh_sts(df_longformat: pd.DataFrame):
         df_matched_audiometries.rename(columns={"sub_corp_name_baseline": "sub_corp_name"}, inplace=True)
         df_matched_audiometries.rename(columns={"patient_name_baseline": "patient_name"}, inplace=True)
         df_matched_audiometries.rename(columns={"title_baseline": "title"}, inplace=True)
-        df_matched_audiometries_cal = calculate_niosh_sts_internal(df_matched_audiometries, show_diff=True)
+        df_matched_audiometries_cal = calculate_niosh_sts_internal(df_matched_audiometries, show_diff=False)
         df_matched_audiometries_cal["year"] = str(year_list[index + 1]) + "-" + str(year_list[index])
         df_temp.append(df_matched_audiometries_cal)
     return pd.concat(df_temp, axis=0)
+
+
+# ENT Referal
+def calculate_ent_refer(df_longformat: pd.DataFrame):
+    df_ent = df_longformat[["title", "patient_name", "show_hn", "sub_corp_name", "year"]].copy()
+    df_ent["morethan_40"] = False
+    for f in [500, 1000, 2000, 4000]:
+        f = str(f)
+        for side in ["l", "r"]:
+            df_ent["morethan_40"] = np.where(df_ent["morethan_40"] | ((df_longformat["audio_" + f + "_" + side]) >= 40),
+                                             True, False)
+    df_diff = df_longformat[["show_hn", "year"]].copy()
+    df_diff["diff_count"] = 0
+    for f in [500, 1000, 2000, 3000, 4000, 6000, 8000]:
+        f = str(f)
+        df_diff["diff_" + f] = np.where(
+            abs((df_longformat["audio_" + f + "_r"] - df_longformat["audio_" + f + "_l"])) > 10, True, False)
+        df_diff["max_"+f] = df_longformat[["audio_" + f + "_r","audio_" + f + "_l"]].max(axis=1)
+        df_diff["sig_diff_"+f] = np.where(df_diff["diff_" + f] & (df_diff["max_"+f]),1,0)
+        df_diff["diff_count"] = df_diff["diff_count"] + df_diff["sig_diff_" + f]
+    df_ent["inequality"] = np.where(df_diff["diff_count"] >= 3, True, False)
+    df_ent["refer"] = np.where(df_ent["morethan_40"] | df_ent["inequality"], True, False)
+    return df_ent
 
 
 # OSHA
@@ -88,7 +113,6 @@ def calculate_osha_sts(df_longformat: pd.DataFrame, age_adjustment=True, baselin
     df_osha = df_longformat.copy()
     df_osha["average_l"] = (df_osha["audio_2000_l"] + df_osha["audio_3000_l"] + df_osha["audio_4000_l"]) / 3
     df_osha["average_r"] = (df_osha["audio_2000_r"] + df_osha["audio_3000_r"] + df_osha["audio_4000_r"]) / 3
-    # df_osha_baseline = pd.DataFrame(columns=["show_hn","average_l_baseline","average_r_baseline","average_l_1","average_r_1","average_l_2","average_r_2","average_l_3","average_r_3"], dtype=['str','float','float','float','float','float','float','float','float'])
     df_osha_baseline = pd.DataFrame(columns=["show_hn"], dtype='str')
     for i in range(1, 4):
         df_osha_baseline["average_l_" + str(i)] = np.NaN
@@ -116,11 +140,11 @@ def calculate_osha_sts(df_longformat: pd.DataFrame, age_adjustment=True, baselin
                                                                               "average_" + side + "_baseline"]
                 df_osha_matched_comparing_with_baseline["sig_better_" + side] = np.where(
                     np.isclose(df_osha_matched_comparing_with_baseline["diff_" + side], -5.0) | (
-                                df_osha_matched_comparing_with_baseline["diff_" + side] <= -5.0), True, False)
+                            df_osha_matched_comparing_with_baseline["diff_" + side] <= -5.0), True, False)
                 df_osha_matched_comparing_with_baseline["osha_sts_" + side] = np.where(
                     (df_osha_matched_comparing_with_baseline["average_" + side + "_comparing"] > 25) & (
-                                np.isclose(df_osha_matched_comparing_with_baseline["diff_" + side], 10.0) | (
-                                    df_osha_matched_comparing_with_baseline["diff_" + side] >= 10.0)), True, False)
+                            np.isclose(df_osha_matched_comparing_with_baseline["diff_" + side], 10.0) | (
+                            df_osha_matched_comparing_with_baseline["diff_" + side] >= 10.0)), True, False)
             df_osha_matched_comparing_with_baseline["osha_sts"] = np.where(
                 df_osha_matched_comparing_with_baseline["osha_sts_l"] | df_osha_matched_comparing_with_baseline[
                     "osha_sts_r"], True, False)
@@ -130,42 +154,47 @@ def calculate_osha_sts(df_longformat: pd.DataFrame, age_adjustment=True, baselin
             # Add Data to Baseline calculation
             if baseline_revision or age_adjustment:
                 for i in df_osha_matched_comparing_with_baseline.index:
-                    if ~(df_osha_matched_comparing_with_baseline.at[i,"osha_sts"] or df_osha_matched_comparing_with_baseline.at[i,"sig_better"]):
+                    if ~(df_osha_matched_comparing_with_baseline.at[i, "osha_sts"] or
+                         df_osha_matched_comparing_with_baseline.at[i, "sig_better"]):
                         continue
                     if age_adjustment:
                         for side in ["l", "r"]:
                             adjustment = get_age_adjustment(
-                                df_osha_matched_comparing_with_baseline.at[i,"gender"],
-                                df_osha_matched_comparing_with_baseline.at[i,"age"],
-                                df_osha_matched_comparing_with_baseline.at[i,"age_comparing"])
+                                df_osha_matched_comparing_with_baseline.at[i, "gender"],
+                                df_osha_matched_comparing_with_baseline.at[i, "age"],
+                                df_osha_matched_comparing_with_baseline.at[i, "age_comparing"])
                             if len(adjustment["average"]) > 0:
                                 df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] = \
-                                df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] - adjustment["average"][
-                                    0]
+                                    df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] - \
+                                    adjustment["average"][
+                                        0]
                             df_osha_matched_comparing_with_baseline.at[i, "sig_better_" + side] = \
-                            df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] <= -5.0 or np.isclose(
-                                df_osha_matched_comparing_with_baseline.at[i, "diff_" + side], -5.0)
+                                df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] <= -5.0 or np.isclose(
+                                    df_osha_matched_comparing_with_baseline.at[i, "diff_" + side], -5.0)
                             df_osha_matched_comparing_with_baseline.at[i, "osha_sts_" + side] = \
-                            df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] >= 10.0 or np.isclose(
-                                df_osha_matched_comparing_with_baseline.at[i, "diff_" + side], 10.0)
+                                df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] >= 10.0 or np.isclose(
+                                    df_osha_matched_comparing_with_baseline.at[i, "diff_" + side], 10.0)
                         df_osha_matched_comparing_with_baseline.at[i, "sig_better"] = \
-                        df_osha_matched_comparing_with_baseline.at[i, "sig_better_r"] or \
-                        df_osha_matched_comparing_with_baseline.at[i, "sig_better_l"]
+                            df_osha_matched_comparing_with_baseline.at[i, "sig_better_r"] or \
+                            df_osha_matched_comparing_with_baseline.at[i, "sig_better_l"]
                         df_osha_matched_comparing_with_baseline.at[i, "osha_sts"] = \
-                        df_osha_matched_comparing_with_baseline.at[i, "osha_sts_r"] or \
-                        df_osha_matched_comparing_with_baseline.at[i, "osha_sts_l"]
+                            df_osha_matched_comparing_with_baseline.at[i, "osha_sts_r"] or \
+                            df_osha_matched_comparing_with_baseline.at[i, "osha_sts_l"]
 
                     if baseline_revision:
                         for index in df_osha_baseline.index:
-                            if df_osha_baseline.at[index,"show_hn"] == df_osha_matched_comparing_with_baseline.at[i,"show_hn"]: break
+                            if df_osha_baseline.at[index, "show_hn"] == df_osha_matched_comparing_with_baseline.at[
+                                i, "show_hn"]: break
                         for side in ["l", "r"]:
-                            if pd.isna(df_osha_baseline.at[index,"average_" + side + "_1"]):
-                                df_osha_baseline.at[index, "average_" + side + "_1"] = df_osha_matched_comparing_with_baseline.at[i,
-                                    "average_" + side + "_comparing"]
+                            if pd.isna(df_osha_baseline.at[index, "average_" + side + "_1"]):
+                                df_osha_baseline.at[index, "average_" + side + "_1"] = \
+                                df_osha_matched_comparing_with_baseline.at[i,
+                                                                           "average_" + side + "_comparing"]
                                 continue
-                            elif pd.isna(df_osha_baseline.at[index,"average_" + side + "_2"]):
-                                df_osha_baseline.at[index, "average_" + side + "_2"] = df_osha_matched_comparing_with_baseline.at[i,
-                                    "average_" + side + "_comparing"]
+                            elif pd.isna(df_osha_baseline.at[index, "average_" + side + "_2"]):
+                                df_osha_baseline.at[index, "average_" + side + "_2"] = \
+                                df_osha_matched_comparing_with_baseline.at[i,
+                                                                           "average_" + side + "_comparing"]
                                 # Calculate
                                 bv2 = df_osha_baseline.at[index, "average_" + side + "_2"] - df_osha_baseline.at[
                                     index, "average_" + side + "_baseline"]
@@ -174,28 +203,31 @@ def calculate_osha_sts(df_longformat: pd.DataFrame, age_adjustment=True, baselin
                                 if ((bv2 >= 10) or (np.isclose(bv2, 10))) and ((bv1 >= 10) or (np.isclose(bv1, 10))):
                                     if bv2 >= bv1 or np.isclose(bv2, bv1):
                                         df_osha_baseline.at[index, "average_" + side + "_baseline"] = \
-                                        df_osha_baseline.at[index, "average_" + side + "_2"]
+                                            df_osha_baseline.at[index, "average_" + side + "_2"]
                                     else:
                                         df_osha_baseline.at[index, "average_" + side + "_baseline"] = \
-                                        df_osha_baseline.at[index, "average_" + side + "_1"]
-                                    df_osha_baseline.at[index, "age"] = df_osha_matched_comparing_with_baseline.at[i,"age_comparing"]
+                                            df_osha_baseline.at[index, "average_" + side + "_1"]
+                                    df_osha_baseline.at[index, "age"] = df_osha_matched_comparing_with_baseline.at[
+                                        i, "age_comparing"]
                                     df_osha_baseline.at[index, "average_" + side + "_1"] = np.NaN
                                     df_osha_baseline.at[index, "average_" + side + "_2"] = np.NaN
                                 elif ((bv2 <= -5) or (np.isclose(bv2, -5))) and ((bv1 <= -5) or (np.isclose(bv1, -5))):
                                     if bv2 <= bv1 or np.isclose(bv2, bv1):
                                         df_osha_baseline.at[index, "average_" + side + "_baseline"] = \
-                                        df_osha_baseline.at[index, "average_" + side + "_2"]
+                                            df_osha_baseline.at[index, "average_" + side + "_2"]
                                     else:
                                         df_osha_baseline.at[index, "average_" + side + "_baseline"] = \
-                                        df_osha_baseline.at[index, "average_" + side + "_1"]
-                                    df_osha_baseline.at[index, "age"] = df_osha_matched_comparing_with_baseline.at[i,"age_comparing"]
+                                            df_osha_baseline.at[index, "average_" + side + "_1"]
+                                    df_osha_baseline.at[index, "age"] = df_osha_matched_comparing_with_baseline.at[
+                                        i, "age_comparing"]
                                     df_osha_baseline.at[index, "average_" + side + "_1"] = np.NaN
                                     df_osha_baseline.at[index, "average_" + side + "_2"] = np.NaN
                                 else:
                                     continue
-                            elif pd.isna(df_osha_baseline.at[index,"average_" + side + "_3"]):
-                                df_osha_baseline.at[index, "average_" + side + "_3"] = df_osha_matched_comparing_with_baseline.at[i,
-                                    "average_" + side + "_comparing"]
+                            elif pd.isna(df_osha_baseline.at[index, "average_" + side + "_3"]):
+                                df_osha_baseline.at[index, "average_" + side + "_3"] = \
+                                df_osha_matched_comparing_with_baseline.at[i,
+                                                                           "average_" + side + "_comparing"]
                                 # Calculate
                                 bv3 = df_osha_baseline.at[index, "average_" + side + "_3"] - df_osha_baseline.at[
                                     index, "average_" + side + "_baseline"]
@@ -204,22 +236,24 @@ def calculate_osha_sts(df_longformat: pd.DataFrame, age_adjustment=True, baselin
                                 if ((bv3 >= 10) or (np.isclose(bv3, 10))) and ((bv2 >= 10) or (np.isclose(bv2, 10))):
                                     if bv3 >= bv2 or np.isclose(bv3, bv2):
                                         df_osha_baseline.at[index, "average_" + side + "_baseline"] = \
-                                        df_osha_baseline.at[index, "average_" + side + "_3"]
+                                            df_osha_baseline.at[index, "average_" + side + "_3"]
                                     else:
                                         df_osha_baseline.at[index, "average_" + side + "_baseline"] = \
-                                        df_osha_baseline.at[index, "average_" + side + "_2"]
-                                    df_osha_baseline.at[index, "age"] = df_osha_matched_comparing_with_baseline.at[i,"age_comparing"]
+                                            df_osha_baseline.at[index, "average_" + side + "_2"]
+                                    df_osha_baseline.at[index, "age"] = df_osha_matched_comparing_with_baseline.at[
+                                        i, "age_comparing"]
                                     df_osha_baseline.at[index, "average_" + side + "_1"] = np.NaN
                                     df_osha_baseline.at[index, "average_" + side + "_2"] = np.NaN
                                     df_osha_baseline.at[index, "average_" + side + "_3"] = np.NaN
                                 elif ((bv3 <= -5) or (np.isclose(bv3, -5))) and ((bv2 <= -5) or (np.isclose(bv2, -5))):
                                     if bv3 <= bv2 or np.isclose(bv3, bv2):
                                         df_osha_baseline.at[index, "average_" + side + "_baseline"] = \
-                                        df_osha_baseline.at[index, "average_" + side + "_3"]
+                                            df_osha_baseline.at[index, "average_" + side + "_3"]
                                     else:
                                         df_osha_baseline.at[index, "average_" + side + "_baseline"] = \
-                                        df_osha_baseline.at[index, "average_" + side + "_2"]
-                                    df_osha_baseline.at[index, "age"] = df_osha_matched_comparing_with_baseline.at[i,"age_comparing"]
+                                            df_osha_baseline.at[index, "average_" + side + "_2"]
+                                    df_osha_baseline.at[index, "age"] = df_osha_matched_comparing_with_baseline.at[
+                                        i, "age_comparing"]
                                     df_osha_baseline.at[index, "average_" + side + "_1"] = np.NaN
                                     df_osha_baseline.at[index, "average_" + side + "_2"] = np.NaN
                                     df_osha_baseline.at[index, "average_" + side + "_3"] = np.NaN

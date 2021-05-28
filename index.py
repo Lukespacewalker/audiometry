@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from apps import trend,niosh,osha
+from apps import trend,niosh,osha,overview,refer
 
 from app import app
 
@@ -20,7 +20,7 @@ dropdown = dbc.DropdownMenu(
     ],
     nav = True,
     in_navbar = True,
-    label = "Explore",
+    label = "Menu",
 )
 
 navbar = dbc.Navbar(
@@ -28,14 +28,18 @@ navbar = dbc.Navbar(
         [
             html.A(
                 # Use row and col to control vertical alignment of logo / brand
-                dbc.Row(
+                children=[dbc.Row(
                     [
                         dbc.Col(html.Img(src="/assets/audiowav.svg", height="30px")),
-                        dbc.Col(dbc.NavbarBrand("Audiometry DASH", className="ml-2")),
+                        dbc.Col(dbc.NavbarBrand("Audiometry", className="ml-2")),
                     ],
                     align="center",
                     no_gutters=True,
                 ),
+                    dbc.Row(
+                        [dbc.Col(children="Beta (Powered by DASH + Python)",style={"color":"white"})]
+                    )
+                ],
                 href="/home",
             ),
             dbc.NavbarToggler(id="navbar-toggler2"),
@@ -81,8 +85,12 @@ def display_page(pathname):
         return niosh.layout
     elif pathname == '/osha':
         return osha.layout
-    else:
+    elif pathname == '/trend':
         return trend.layout
+    elif pathname == '/refer':
+        return refer.layout
+    else:
+        return overview.layout
 
 if __name__ == '__main__':
     app.run_server(host='127.0.0.1', debug=True)

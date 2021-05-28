@@ -470,10 +470,6 @@ def update_osha_detail(rows, derived_virtual_selected_rows, rows_repeated, deriv
     else:
         return ('เลือกคนที่ต้องการดูรายละเอียดจากตารางด้านบน', dash.no_update, dash.no_update, dash.no_update)
 
-
-
-
-
 @ app.callback(
     [Output('figure-osha', 'figure'),
      Output('osha-sts-patients', 'data'),

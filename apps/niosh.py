@@ -1,8 +1,5 @@
-from dash.exceptions import PreventUpdate
 import dash
 import pandas as pd
-import numpy as np
-import dash_bootstrap_components as dbc
 import plotly.express as px
 import dash_core_components as dcc
 import dash_html_components as html
@@ -13,6 +10,7 @@ from script.audiometry_analysis import calculate_niosh_sts
 
 from app import app, audiometries
 
+# กราฟ NIOSH
 df_niosh_result = calculate_niosh_sts(audiometries)
 df_niosh_graph1 = df_niosh_result.value_counts(
     ["year", "sub_corp_name", "niosh_sts"]).reset_index()
@@ -26,11 +24,16 @@ df_niosh_graph = df_niosh_graph[df_niosh_graph["niosh_sts"] == True]
 df_niosh_graph["text"] = df_niosh_graph["count"].map(
     str) + " (" + df_niosh_graph["%"].map(lambda value: str(round(value * 100, 1))) + "%)"
 
+df_niosh_graph.sort_values(by=["year", "count"], ascending=[True, False], inplace=True)
+
 figure_niosh = px.bar(df_niosh_graph, x="sub_corp_name", y="count", color="year", text="count",
-                      title="จำนวนพนักงานที่ผลตรวจเข้าตาม NIOSH Significant Threshould Shift แยกตามแผนกและปี",
+                      #title="จำนวนพนักงานที่ผลตรวจเข้าตาม NIOSH Significant Threshould Shift แยกตามแผนกและปี",
                       barmode="group", height=600,
                       labels={"count": "จำนวนพนักงาน", "sub_corp_name": "แผนก", "niosh_sts": "STS"})
 figure_niosh = figure_niosh.update_xaxes(showgrid=True)
+# แผนก 3 ลำดับแรกท่ี่มีพนักงานเข้าเกณฑ์มากสุดในปีล่าสุด
+df_niosh_latest_year = df_niosh_graph[df_niosh_graph["year"] == df_niosh_graph["year"].unique().max()].sort_values(
+    ["year", "count"],ascending=[True,False],inplace=True)
 # รายชื่อผู้ที่มี NIOSH STS
 df_niosh_sts_patients = df_niosh_result[df_niosh_result["niosh_sts"] == True].drop(
     columns=["niosh_sts"]).reset_index(drop=True).sort_values(["sub_corp_name", "patient_name"])
@@ -43,74 +46,82 @@ df_niosh_sts_patients_repeated = df_niosh_sts_patients_repeated.sort_values(
 df_niosh_patient_detail = pd.merge(left=df_niosh_sts_patients_repeated, right=(
     audiometries.drop(columns=["title", "patient_name"])), on=["show_hn"], how="inner")
 cols = list(df_niosh_patient_detail)
-# move the column to head of list using index, pop and insert
 cols.insert(0, cols.pop(cols.index('title')))
 df_niosh_patient_detail = df_niosh_patient_detail.loc[:, cols]
 
-layout = html.Div(children=[html.H2(
-    children='NIOSH Significant Threshold Shift'
-),
-    dcc.Graph(
-        id='figure-niosh',
-        figure=figure_niosh
-    ),
-    html.H2(
-        children='รายชื่อผู้ที่เข้าได้กับ NIOSH Significant Threshold Shift'
-    ),
-    dcc.Tabs([
-        dcc.Tab(label='ตามปีที่เปรียบเทียบ', children=[
-            table.DataTable(
-                id='niosh-sts-patients',
-                columns=[{"name": "HN", "id": "show_hn"},
-                         {"name": "คำนำหน้า", "id": "title"},
-                         {"name": "ชื่อ-นามสกุล",
-                          "id": "patient_name"},
-                         {"name": "แผนก", "id": "sub_corp_name"},
-                         {"name": "เปรียบเทียบระหว่าง", "id": "year"}],
-                data=df_niosh_sts_patients.to_dict(
-                    orient='records'),
-                sort_action="native",
-                sort_mode="multi",
-                filter_action="native",
-                page_action="native",
-                row_selectable="single",
-                page_current=0,
-                page_size=10,
-            )
-        ]),
-        dcc.Tab(
-            label='ตามจำนวนครั้งที่เข้าได้', children=[
-                table.DataTable(
-                    id='niosh-sts-repeated-patients',
-                    columns=[{"name": "HN", "id": "show_hn"},
-                             {"name": "คำนำหน้า", "id": "title"},
-                             {"name": "ชื่อ-นามสกุล",
-                              "id": "patient_name"},
-                             {"name": "จำนวนครั้งของ NIOSH STS", "id": "repeated"}],
-                    data=df_niosh_sts_patients_repeated.to_dict(
-                        orient='records'),
-                    sort_action="native",
-                    sort_mode="multi",
-                    filter_action="native",
-                    page_action="native",
-                    row_selectable="single",
-                    page_current=0,
-                    page_size=10,
-                )
-            ]),
-    ]),
-    html.H3(
-        id='niosh-sts-detail-heading',
-        children=''
-    ),
-    dcc.Loading(
-        id="niosh-sts-detail-loading",
-        type="default",
-        children=[
-            html.Div(
-                id='niosh-sts-detail-container'
-            ),
-        ])])
+layout = html.Div(children=[html.H1('NIOSH Significant Threshold Shift'),
+                            html.H2("กราฟแสดงจำนวนพนักงานที่เข้าเกณฑ์ ์NIOSH STS รายปีของแต่ละแผนก"),
+                            dcc.Graph(
+                                id='figure-niosh',
+                                figure=figure_niosh
+                            ),
+                            html.H2("แผนกที่มีจำนวนพนักงานเข้าเกณฑ์ NIOSH STS 3 อันดับแรก ในปีล่าสุด"),
+                            html.H2(
+                                children='รายชื่อผู้ที่เข้าได้กับ NIOSH Significant Threshold Shift'
+                            ),
+                            table.DataTable(
+                                id='niosh-latest-year',
+                                columns=[{"name": "แผนก", "id": "sub_corp_name"},
+                                         {"name": "เปรียบเทียบระหว่าง", "id": "year"},
+                                         {"name": "จำนวนพนักงานที่เข้าเกณฑ์", "id": "count"},
+                                         {"name": "สัดส่วน", "id": "%"}],
+                                data=df_niosh_latest_year.to_dict(
+                                    orient='records'),
+                            ),
+                            dcc.Tabs([
+                                dcc.Tab(label='ตามปีที่เปรียบเทียบ', children=[
+                                    table.DataTable(
+                                        id='niosh-sts-patients',
+                                        columns=[{"name": "HN", "id": "show_hn"},
+                                                 {"name": "คำนำหน้า", "id": "title"},
+                                                 {"name": "ชื่อ-นามสกุล",
+                                                  "id": "patient_name"},
+                                                 {"name": "แผนก", "id": "sub_corp_name"},
+                                                 {"name": "เปรียบเทียบระหว่าง", "id": "year"}],
+                                        data=df_niosh_sts_patients.to_dict(
+                                            orient='records'),
+                                        sort_action="native",
+                                        sort_mode="multi",
+                                        filter_action="native",
+                                        page_action="native",
+                                        row_selectable="single",
+                                        page_current=0,
+                                        page_size=10,
+                                    )
+                                ]),
+                                dcc.Tab(
+                                    label='ตามจำนวนครั้งที่เข้าได้', children=[
+                                        table.DataTable(
+                                            id='niosh-sts-repeated-patients',
+                                            columns=[{"name": "HN", "id": "show_hn"},
+                                                     {"name": "คำนำหน้า", "id": "title"},
+                                                     {"name": "ชื่อ-นามสกุล",
+                                                      "id": "patient_name"},
+                                                     {"name": "จำนวนครั้งของ NIOSH STS", "id": "repeated"}],
+                                            data=df_niosh_sts_patients_repeated.to_dict(
+                                                orient='records'),
+                                            sort_action="native",
+                                            sort_mode="multi",
+                                            filter_action="native",
+                                            page_action="native",
+                                            row_selectable="single",
+                                            page_current=0,
+                                            page_size=10,
+                                        )
+                                    ]),
+                            ]),
+                            html.H3(
+                                id='niosh-sts-detail-heading',
+                                children=''
+                            ),
+                            dcc.Loading(
+                                id="niosh-sts-detail-loading",
+                                type="default",
+                                children=[
+                                    html.Div(
+                                        id='niosh-sts-detail-container'
+                                    ),
+                                ])])
 
 
 @app.callback(

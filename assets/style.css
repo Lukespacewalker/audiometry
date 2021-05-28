@@ -1,11 +1,14 @@
 body{
     background: #FEFEFE;
-    padding: 0 clamp(10px,calc(2 * 2vw),60px);
     font-family: "Convection", "Sarabun", san-serif;
 }
 h1,h2,h3,h4,h5{
     font-family: "Convection", "Sarabun", san-serif;
     font-weight: Lighter
+}
+
+#page-content{
+    padding: 0 clamp(10px,calc(2 * 2vw),60px);
 }
 
 .left-right-audiometry-container{

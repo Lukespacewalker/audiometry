@@ -36,6 +36,7 @@ def analyze_osha(baseline_revision=True, age_adjustment=True):
     figure_osha = figure_osha.update_xaxes(showgrid=True)
     return (df_osha_result, figure_osha)
 
+figures_osha = {"+baseline+age": analyze_osha(),"+baseline-age":None,"-baseline+age":None,"-baseline-age":None}
 
 layout = html.Div(children=[
     html.H2(
@@ -192,16 +193,23 @@ def update_osha_detail(rows, derived_virtual_selected_rows, rows_repeated, deriv
      Output('osha-sts-patients', 'data'),
      Output('osha-sts-repeated-patients', 'data')],
     [Input('osha-analysis-mode', 'value')])
-def update_osha_graph(mode: str):
-    if mode == "-baseline-age":
-        result, figure = analyze_osha(
-            baseline_revision=False, age_adjustment=False)
-    elif mode == "+baseline-age":
-        result, figure = analyze_osha(age_adjustment=False)
-    elif mode == "-baseline+age":
-        result, figure = analyze_osha(baseline_revision=False)
-    elif mode == "+baseline+age":
-        result, figure = analyze_osha()
+def dash_generate_osha_graph(mode: str):
+    return generate_osha_graph(mode)
+
+def generate_osha_graph(mode: str):
+    if figures_osha[mode] is not None:
+        result, figure = figures_osha[mode]
+    else:
+        if mode == "-baseline-age":
+            result, figure = analyze_osha(
+                baseline_revision=False, age_adjustment=False)
+        elif mode == "+baseline-age":
+            result, figure = analyze_osha(age_adjustment=False)
+        elif mode == "-baseline+age":
+            result, figure = analyze_osha(baseline_revision=False)
+        elif mode == "+baseline+age":
+            result, figure = analyze_osha()
+        figures_osha[mode] = (result,mode)
     # รายชื่อผู้ที่มี OSHA STS
     df_osha_sts_patients = result[result["osha_sts"] == True].reset_index(drop=True).drop(
         columns=["osha_sts"]).reset_index(drop=True).sort_values(["sub_corp_name", "patient_name"])
@@ -211,5 +219,4 @@ def update_osha_graph(mode: str):
     df_osha_sts_patients_repeated = df_osha_sts_patients_repeated.sort_values(
         ["repeated", "patient_name"], ascending=[False, True])
 
-    return (
-    figure, df_osha_sts_patients.to_dict(orient='records'), df_osha_sts_patients_repeated.to_dict(orient='records'))
+    return (figure, df_osha_sts_patients.to_dict(orient='records'), df_osha_sts_patients_repeated.to_dict(orient='records'))
