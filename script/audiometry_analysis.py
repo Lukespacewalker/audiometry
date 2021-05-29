@@ -166,8 +166,9 @@ def calculate_osha_sts(df_longformat: pd.DataFrame, age_adjustment=True, baselin
                             if len(adjustment["average"]) > 0:
                                 df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] = \
                                     df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] - \
-                                    adjustment["average"][
-                                        0]
+                                    adjustment["average"][0]
+                            else:
+                                raise Exception(str(df_osha_matched_comparing_with_baseline.at[i, "show_hn"])+df_osha_matched_comparing_with_baseline.at[i, "gender"]+" "+str(df_osha_matched_comparing_with_baseline.at[i, "age"])+" "+str(df_osha_matched_comparing_with_baseline.at[i, "age_comparing"])+'length adjustment["average"] < 0 which should be not possible')
                             df_osha_matched_comparing_with_baseline.at[i, "sig_better_" + side] = \
                                 df_osha_matched_comparing_with_baseline.at[i, "diff_" + side] <= -5.0 or np.isclose(
                                     df_osha_matched_comparing_with_baseline.at[i, "diff_" + side], -5.0)
@@ -266,7 +267,7 @@ def calculate_osha_sts(df_longformat: pd.DataFrame, age_adjustment=True, baselin
             # Add New People to baseline
             df_osha_new_people = df_osha_comparing[
                 ~df_osha_comparing["show_hn"].isin(df_osha_baseline["show_hn"])]  # not in df_osha_baseline
-            df_osha_baseline = df_osha_baseline.append(df_osha_new_people[["show_hn", "average_l", "average_r"]].rename(
+            df_osha_baseline = df_osha_baseline.append(df_osha_new_people[["age","show_hn", "average_l", "average_r"]].rename(
                 columns={"average_l": "average_l_baseline", "average_r": "average_r_baseline"}), ignore_index=True)
             df_osha_cal = df_osha_matched_comparing_with_baseline[
                 ["show_hn", "title", "patient_name", "sub_corp_name", "osha_sts"]].copy()

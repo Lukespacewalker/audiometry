@@ -27,13 +27,12 @@ df_niosh_graph["text"] = df_niosh_graph["count"].map(
 df_niosh_graph.sort_values(by=["year", "count"], ascending=[True, False], inplace=True)
 
 figure_niosh = px.bar(df_niosh_graph, x="sub_corp_name", y="count", color="year", text="count",
-                      #title="จำนวนพนักงานที่ผลตรวจเข้าตาม NIOSH Significant Threshould Shift แยกตามแผนกและปี",
+                      # title="จำนวนพนักงานที่ผลตรวจเข้าตาม NIOSH Significant Threshould Shift แยกตามแผนกและปี",
                       barmode="group", height=600,
                       labels={"count": "จำนวนพนักงาน", "sub_corp_name": "แผนก", "niosh_sts": "STS"})
 figure_niosh = figure_niosh.update_xaxes(showgrid=True)
 # แผนก 3 ลำดับแรกท่ี่มีพนักงานเข้าเกณฑ์มากสุดในปีล่าสุด
-df_niosh_latest_year = df_niosh_graph[df_niosh_graph["year"] == df_niosh_graph["year"].unique().max()].sort_values(
-    ["year", "count"],ascending=[True,False],inplace=True)
+df_niosh_latest_year = df_niosh_graph[df_niosh_graph["year"] == df_niosh_graph["year"].unique().max()]
 # รายชื่อผู้ที่มี NIOSH STS
 df_niosh_sts_patients = df_niosh_result[df_niosh_result["niosh_sts"] == True].drop(
     columns=["niosh_sts"]).reset_index(drop=True).sort_values(["sub_corp_name", "patient_name"])
@@ -50,12 +49,13 @@ cols.insert(0, cols.pop(cols.index('title')))
 df_niosh_patient_detail = df_niosh_patient_detail.loc[:, cols]
 
 layout = html.Div(children=[html.H1('NIOSH Significant Threshold Shift'),
-                            html.H2("กราฟแสดงจำนวนพนักงานที่เข้าเกณฑ์ ์NIOSH STS รายปีของแต่ละแผนก"),
+                            html.H2("กราฟแสดงจำนวนพนักงานที่เข้าเกณฑ์ NIOSH STS รายปีของแต่ละแผนก"),
                             dcc.Graph(
                                 id='figure-niosh',
                                 figure=figure_niosh
                             ),
-                            html.H2("แผนกที่มีจำนวนพนักงานเข้าเกณฑ์ NIOSH STS 3 อันดับแรก ในปีล่าสุด"),
+                            html.H2("แผนกที่มีจำนวนพนักงานเข้าเกณฑ์ NIOSH STS มากที่สุดตามลำดับ ในปีล่าสุด " + str(
+                                df_niosh_graph["year"].unique().max())),
                             html.H2(
                                 children='รายชื่อผู้ที่เข้าได้กับ NIOSH Significant Threshold Shift'
                             ),
@@ -63,8 +63,8 @@ layout = html.Div(children=[html.H1('NIOSH Significant Threshold Shift'),
                                 id='niosh-latest-year',
                                 columns=[{"name": "แผนก", "id": "sub_corp_name"},
                                          {"name": "เปรียบเทียบระหว่าง", "id": "year"},
-                                         {"name": "จำนวนพนักงานที่เข้าเกณฑ์", "id": "count"},
-                                         {"name": "สัดส่วน", "id": "%"}],
+                                         {"name": "จำนวนพนักงานที่เข้าเกณฑ์", "id": "count"}],
+                                export_format="xlsx",
                                 data=df_niosh_latest_year.to_dict(
                                     orient='records'),
                             ),
@@ -78,6 +78,7 @@ layout = html.Div(children=[html.H1('NIOSH Significant Threshold Shift'),
                                                   "id": "patient_name"},
                                                  {"name": "แผนก", "id": "sub_corp_name"},
                                                  {"name": "เปรียบเทียบระหว่าง", "id": "year"}],
+                                        export_format="xlsx",
                                         data=df_niosh_sts_patients.to_dict(
                                             orient='records'),
                                         sort_action="native",
@@ -98,10 +99,10 @@ layout = html.Div(children=[html.H1('NIOSH Significant Threshold Shift'),
                                                      {"name": "ชื่อ-นามสกุล",
                                                       "id": "patient_name"},
                                                      {"name": "จำนวนครั้งของ NIOSH STS", "id": "repeated"}],
+                                            export_format="xlsx",
                                             data=df_niosh_sts_patients_repeated.to_dict(
                                                 orient='records'),
                                             sort_action="native",
-                                            sort_mode="multi",
                                             filter_action="native",
                                             page_action="native",
                                             row_selectable="single",

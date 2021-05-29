@@ -22,12 +22,16 @@ df_refer_graph = pd.concat([df_refer_graph1, df_refer_graph2["%"]], axis=1).sort
 df_refer_graph = df_refer_graph[df_refer_graph["refer"] == True]
 df_refer_graph["text"] = df_refer_graph["count"].map(
     str) + " (" + df_refer_graph["%"].map(lambda value: str(round(value * 100, 1))) + "%)"
+df_refer_graph["year"] = df_refer_graph["year"].astype("category")
+
+df_refer_graph.sort_values(by=["year", "count"], ascending=[True, False], inplace=True)
 
 figure_refer = px.bar(df_refer_graph, x="sub_corp_name", y="count", color="year", text="count",
-                      title="พนักงานที่ต้องส่งต่อไปยังแพทย์ หู คอ จมูก",
+                      #title="พนักงานที่ต้องส่งต่อไปยังแพทย์ หู คอ จมูก",
                       barmode="group", height=600,
                       labels={"count": "จำนวนพนักงาน", "sub_corp_name": "แผนก", "refer": "ส่งต่อ"})
 figure_refer = figure_refer.update_xaxes(showgrid=True)
+
 # รายชื่อผู้ที่มี NIOSH STS
 df_refer_patients = df_refer_result[df_refer_result["refer"] == True].drop(
     columns=["refer"]).reset_index(drop=True).sort_values(["sub_corp_name", "patient_name"])
@@ -36,6 +40,14 @@ df_refer_patients_repeated = df_refer_patients.value_counts(
 df_refer_patients_repeated.columns.values[3] = "repeated"
 df_refer_patients_repeated = df_refer_patients_repeated.sort_values(
     ["repeated", "patient_name"], ascending=[False, True])
+# แต่ละแผนก
+df_refer_corp_count = df_refer_patients.value_counts(["year", "sub_corp_name"]).reset_index()
+df_refer_corp_count.columns.values[2] = "count"
+df_refer_corp_count.sort_values(
+    ["year", "count"], ascending=[True, False], inplace=True)
+df_refer_corp_count["year"] = df_refer_corp_count["year"].astype("int")
+#df_refer_corp_count = df_refer_corp_count[df_refer_corp_count["year"] == df_refer_corp_count["year"].unique().max()]
+
 # รายละเอียดผลตรวจ Audiogram ของผู้ที่เข้าเกณฑ์
 df_refer_patient_detail = pd.merge(left=df_refer_patients_repeated, right=(
     audiometries.drop(columns=["title", "patient_name"])), on=["show_hn"], how="inner")
@@ -44,12 +56,19 @@ cols = list(df_refer_patient_detail)
 cols.insert(0, cols.pop(cols.index('title')))
 df_refer_patient_detail = df_refer_patient_detail.loc[:, cols]
 
-layout = html.Div(children=[html.H2(
+layout = html.Div(children=[html.H1(
     children='พนักงานที่ต้องส่งต่อไปยังแพทย์หู คอ จมูก'
 ),
     dcc.Graph(
         id='figure-refer',
         figure=figure_refer
+    ),
+    html.H2(children="จำนวนแผนกที่ต้องส่งไปยัง ENT ในปี " + str(df_refer_corp_count["year"].unique().max())),
+    table.DataTable(
+        id="refer-table",
+        columns=[{"name": "แผนก", "id": "sub_corp_name"}, {"name": "จำนวนคน", "id": "count"}, {"name": "ปี", "id": "year"}],
+        data=df_refer_corp_count.to_dict(orient='records'),
+        export_format="xlsx",
     ),
     html.H2(
         children='รายชื่อผู้ที่ต้องส่งต่อ'
@@ -66,6 +85,7 @@ layout = html.Div(children=[html.H2(
                          {"name": "ปี", "id": "year"}],
                 data=df_refer_patients.to_dict(
                     orient='records'),
+                export_format="xlsx",
                 sort_action="native",
                 sort_mode="multi",
                 filter_action="native",
@@ -86,6 +106,7 @@ layout = html.Div(children=[html.H2(
                              {"name": "จำนวนครั้งที่ต้อง Refer", "id": "repeated"}],
                     data=df_refer_patients_repeated.to_dict(
                         orient='records'),
+                    export_format="xlsx",
                     sort_action="native",
                     sort_mode="multi",
                     filter_action="native",

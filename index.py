@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from apps import trend,niosh,osha,overview,refer
+from apps import trend, niosh, osha, overview, refer
 
 from app import app
 
@@ -18,9 +18,9 @@ dropdown = dbc.DropdownMenu(
         dbc.DropdownMenuItem("Refer", href="/refer"),
         dbc.DropdownMenuItem("Trend", href="/trend"),
     ],
-    nav = True,
-    in_navbar = True,
-    label = "Menu",
+    nav=True,
+    in_navbar=True,
+    label="Menu",
 )
 
 navbar = dbc.Navbar(
@@ -37,7 +37,7 @@ navbar = dbc.Navbar(
                     no_gutters=True,
                 ),
                     dbc.Row(
-                        [dbc.Col(children="Beta (Powered by DASH + Python)",style={"color":"white"})]
+                        [dbc.Col(children="Beta (Powered by DASH + Python)", style={"color": "white"})]
                     )
                 ],
                 href="/home",
@@ -58,10 +58,12 @@ navbar = dbc.Navbar(
     className="mb-4",
 )
 
+
 def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+
 
 for i in [2]:
     app.callback(
@@ -76,6 +78,7 @@ app.layout = html.Div([
     navbar,
     html.Div(id='page-content')
 ])
+
 
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
@@ -92,5 +95,6 @@ def display_page(pathname):
     else:
         return overview.layout
 
+
 if __name__ == '__main__':
-    app.run_server(host='127.0.0.1', debug=True)
+    app.run_server(host='127.0.0.1', debug=False)
