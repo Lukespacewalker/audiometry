@@ -1,0 +1,5 @@
+dash==1.20.0
+plotly==4.14.3
+pandas~=1.2.4
+openpyxl==3.0.7
+XlsxWriter==1.4.3
